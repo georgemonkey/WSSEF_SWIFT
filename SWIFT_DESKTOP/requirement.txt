@@ -1,0 +1,9 @@
+1. 2D map interface
+2. geofence options
+3. route button
+4. add/connect drone button
+5. disconnect drone
+6. take off individually
+7. take off group
+8. easy to read interface
+9. account settings
