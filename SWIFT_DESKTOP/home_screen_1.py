@@ -3,18 +3,18 @@ from tkinter import ttk
 import tkintermapview as tkmap
 import requests
 
-# Setup window
+
 root = tk.Tk()
 root.title("Geofence Creator")
 root.geometry("1000x700")
 
-# Store points
+
 points = []
 markers = []
 drawing = False
 polygon = None
 
-# Create map
+
 map_widget = tkmap.TkinterMapView(root, corner_radius=0)
 map_widget.pack(fill=tk.BOTH, expand=True)
 map_widget.set_position(40.7128, -74.0060)
@@ -34,7 +34,7 @@ def click_map(coords):
 
     # reorder points to avoid self‑intersection
     if len(points) >= 3:
-        # compute centroid
+        #centroid
         cx = sum(p[0] for p in points) / len(points)
         cy = sum(p[1] for p in points) / len(points)
 
@@ -90,12 +90,12 @@ def auto_locate():
     except:
         print("could not auto detect location")
 
-# Area calculation function
+
 def geofence_area_ft2():
     if len(points) < 3:
         return 0.0
 
-    # compute area with the shoelace formula
+    #compute area with the shoelaceeeeeeeeee formula
     area = 0
     for i in range(len(points)):
         x1, y1 = points[i]
@@ -104,13 +104,12 @@ def geofence_area_ft2():
 
     area = abs(area) / 2
 
-    # rough conversion assuming degrees to feet (not accurate but simple)
-    # 1 degree lat ≈ 364000 ft, 1 degree lon ≈ 288200 ft at mid‑latitudes
+
     converted_area = area * (364000 * 288200)
 
     return converted_area
 
-# Top bar
+
 frame = ttk.Frame(root)
 frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
 
