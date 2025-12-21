@@ -1,136 +1,107 @@
+from geopy.geocoders import Nominatim
 import tkinter as tk
-from tkinter import ttk
-import tkintermapview as tkmap
-import requests
+from tkintermapview import TkinterMapView
+from tkinter import Image, Label, StringVar, messagebox
+from shapely.geometry import Polygon
+from pyproj import CRS, Transformer
 
 
-root = tk.Tk()
-root.title("Geofence Creator")
-root.geometry("1000x700")
+
+def calculate_area(lat_long, target_epsg = "EPSG:3857"):
+    source_crs = CRS("EPSG:4326")
+    target_crs = CRS(target_epsg)
+    transformer = Transformer.from_crs(source_crs,target_crs,always_xy=True)
+    projected_points = [transformer.transform(lon,lat) for lat,lon in lat_long]
+    polygon = Polygon(projected_points)
+    area = polygon.area
+    return area
+
+def map_click(coordinates_tuple):
+    global list1
+    print(coordinates_tuple)
+    list1.append(coordinates_tuple)
+    print(list1)
+    
+    if len(list1)>=2:
+        path1 = map_widget.set_polygon(list1,fill_color = None, border_width = 5,outline_color="red")
+def area1():
+    area = calculate_area(list1)
+    print("area of selected polygon in sq meters: ", area)
 
 
-points = []
-markers = []
-drawing = False
-polygon = None
+geolocator = Nominatim(user_agent="my_geocoder_app")
+list1 = []
+def f1():
+    global map_widget
+    
+    print(searchType)
+    map_win=tk.Toplevel()
+    b2=tk.Button(map_win,text="geofence", command=area1)
+    b2.pack()
+    map_widget = TkinterMapView(map_win, width=800, height=600, corner_radius=0)
+    map_widget.pack(fill="both", expand=True)   
+    if searchType.get() == "AD":
+        address = t3.get("0.0","end")
+        location = geolocator.geocode(address)
+        map_widget.set_position(location.latitude,location.longitude)
+        map_widget.add_left_click_map_command(map_click)
 
-
-map_widget = tkmap.TkinterMapView(root, corner_radius=0)
-map_widget.pack(fill=tk.BOTH, expand=True)
-map_widget.set_position(40.7128, -74.0060)
-map_widget.set_zoom(12)
-map_widget.set_tile_server("https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
-
-def click_map(coords):
-    global polygon
-    if not drawing:
-        return
-
-    lat, lon = coords
-    points.append((lat, lon))
-
-    marker = map_widget.set_marker(lat, lon, text="", marker_color_circle="red", marker_color_outside="white")
-    markers.append(marker)
-
-    # reorder points to avoid self‑intersection
-    if len(points) >= 3:
-        #centroid
-        cx = sum(p[0] for p in points) / len(points)
-        cy = sum(p[1] for p in points) / len(points)
-
-        # sort points by angle
-        import math
-        ordered = sorted(points, key=lambda p: math.atan2(p[1] - cy, p[0] - cx))
+        
+    elif searchType.get() == "LL":
+        lat = float(t1.get())
+        long = float(t2.get())
+        map_widget.set_position(lat,long)
+        coordinates = f"{lat},{long}"
+        location = geolocator.reverse(coordinates) 
+        address1 = location.address
+        location = geolocator.geocode(address1)
+        map_widget.set_position(location.latitude,location.longitude)
+        map_widget.add_left_click_map_command(map_click)
     else:
-        ordered = points
+        print("error please try selecting an option")
+    
+    map_widget.set_zoom(15)
 
-    if polygon:
-        polygon.delete()
-
-    if len(ordered) >= 3:
-        polygon = map_widget.set_path(ordered + [ordered[0]], color="yellow", width=3)
-    else:
-        polygon = map_widget.set_path(ordered, color="yellow", width=3)
-
-def toggle_draw():
-    global drawing
-    drawing = not drawing
-    btn_draw.config(text="Stop" if drawing else "Draw")
-
-def clear():
-    global polygon, points, markers
-    points = []
-    markers = []
-    if polygon:
-        polygon.delete()
-    for marker in map_widget.canvas_marker_list:
-        marker.delete()
+    map_win.mainloop()
+#TkinterMapView.add_left_click_map_command(label = "")
 
 
-def go_location():
-    try:
-        lat = float(entry_lat.get())
-        lon = float(entry_lon.get())
-        map_widget.set_position(lat, lon) 
-        map_widget.set_zoom(14)
-    except:
-        pass
+root=tk.Tk()
+root.geometry("500x500")
+frame1=tk.Frame(root,bd=5)
+frame1.place(x=0,y=0)
+b1=tk.Button(frame1,text="Map",command=f1)
+b1.grid(row=8,column=3)
+
+l1 = tk.Label(frame1,text="Latitude")
+l1.grid(row=1,column=3)
+t1 = tk.Entry(frame1)
+t1.grid(row=1,column=4)
 
 
-def auto_locate():
-    try:
-        data = requests.get("https://ipinfo.io/json").json()
-        lat, lon = map(float, data["loc"].split(","))
-        entry_lat.delete(0, tk.END)
-        entry_lat.insert(0, str(lat))
-        entry_lon.delete(0, tk.END)
-        entry_lon.insert(0, str(lon))
-        map_widget.set_position(lat, lon)
-        map_widget.set_zoom(14)
-    except:
-        print("could not auto detect location")
+l2 = tk.Label(frame1,text="Longitude")
+l2.grid(row=3,column=3)
+t2 = tk.Entry(frame1)
+t2.grid(row=3,column=4)
+
+l3 = tk.Label(frame1,text="Address")
+l3.grid(row=5,column=3)
+t3 = tk.Text(frame1, width=25,height = 5)
+t3.grid(row=5,column=4)
+searchType = StringVar()
+rb1 = tk.Radiobutton(frame1,text="Lat/Long",variable=searchType, value="LL")
+rb1.grid(row=7,column=3)
+
+rb2 = tk.Radiobutton(frame1,text="Address",variable=searchType, value="AD")
+rb2.grid(row=7,column=4)
 
 
-def geofence_area_ft2():
-    if len(points) < 3:
-        return 0.0
-
-    #compute area with the shoelaceeeeeeeeee formula
-    area = 0
-    for i in range(len(points)):
-        x1, y1 = points[i]
-        x2, y2 = points[(i + 1) % len(points)]
-        area += x1 * y2 - x2 * y1
-
-    area = abs(area) / 2
 
 
-    converted_area = area * (364000 * 288200)
-
-    return converted_area
-
-
-frame = ttk.Frame(root)
-frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
-
-btn_draw = ttk.Button(frame, text="Draw", command=toggle_draw, width=8)
-btn_draw.pack(side=tk.LEFT, padx=5)
-
-ttk.Button(frame, text="Clear", command=clear, width=8).pack(side=tk.LEFT, padx=5)
-
-ttk.Label(frame, text="Lat:").pack(side=tk.LEFT, padx=(20,5))
-entry_lat = ttk.Entry(frame, width=12)
-entry_lat.pack(side=tk.LEFT, padx=5)
-entry_lat.insert(0, "40.7128")
-
-ttk.Label(frame, text="Lon:").pack(side=tk.LEFT, padx=5)
-entry_lon = ttk.Entry(frame, width=12)
-entry_lon.pack(side=tk.LEFT, padx=5)
-entry_lon.insert(0, "-74.0060")
-
-ttk.Button(frame, text="Go", command=go_location, width=6).pack(side=tk.LEFT, padx=5)
-ttk.Button(frame, text="Auto‑Locate", command=auto_locate, width=10).pack(side=tk.LEFT, padx=5)
-
-map_widget.add_left_click_map_command(click_map)
-
+#62,361.06 m
+#
+#30,766.01 m²
 root.mainloop()
+
+
+
