@@ -17,17 +17,22 @@ def calculate_area(lat_long, target_epsg = "EPSG:3857"):
     return area
 
 def map_click(coordinates_tuple):
+    global path1
     global list1
     print(coordinates_tuple)
     list1.append(coordinates_tuple)
     print(list1)
     
     if len(list1)>=2:
-        path1 = map_widget.set_polygon(list1,fill_color = None, border_width = 5,outline_color="red")
+        path1 = map_widget.set_polygon(list1,fill_color = None, border_width = 1,outline_color="red")
 def area1():
     area = calculate_area(list1)
-    print("area of selected polygon in sq meters: ", area)
+    print("area of selected polygon in sq meters: ", area/2)
 
+def clearselection():
+    list1.clear()
+    map_widget.delete_all_polygon();
+    print("cleared selection")
 
 geolocator = Nominatim(user_agent="my_geocoder_app")
 list1 = []
@@ -36,10 +41,13 @@ def f1():
     
     print(searchType)
     map_win=tk.Toplevel()
-    b2=tk.Button(map_win,text="geofence", command=area1)
+    b2=tk.Button(map_win,text="calculate area", command=area1)
     b2.pack()
+    b3=tk.Button(map_win,text="clear selection", command=clearselection)
+    b3.pack()
+    #47.59089950737359, -122.00988967564055
     map_widget = TkinterMapView(map_win, width=800, height=600, corner_radius=0)
-    map_widget.pack(fill="both", expand=True)   
+    map_widget.pack(fill="both", expand=True) 
     if searchType.get() == "AD":
         address = t3.get("0.0","end")
         location = geolocator.geocode(address)
@@ -67,32 +75,41 @@ def f1():
 
 
 root=tk.Tk()
+root.title("swarm drone autonomous path")
 root.geometry("500x500")
+root["bg"] = "#060B16"
 frame1=tk.Frame(root,bd=5)
 frame1.place(x=0,y=0)
-b1=tk.Button(frame1,text="Map",command=f1)
+frame1["bg"] = "#060B16"
+b1=tk.Button(frame1,text="Display Map",command=f1,bg="#060B16",highlightbackground="#060B16")
 b1.grid(row=8,column=3)
 
-l1 = tk.Label(frame1,text="Latitude")
+l1 = tk.Label(frame1,text="Latitude:",bg="#060B16")
 l1.grid(row=1,column=3)
-t1 = tk.Entry(frame1)
+placeholder1 = tk.StringVar(root,value="enter latitude here")
+t1 = tk.Entry(frame1,bg="#060B16",highlightbackground="#E0E0E0",highlightcolor="#90B1F1",textvariable=placeholder1)
 t1.grid(row=1,column=4)
 
 
-l2 = tk.Label(frame1,text="Longitude")
+
+l2 = tk.Label(frame1,text="Longitude:",bg="#060B16")
 l2.grid(row=3,column=3)
-t2 = tk.Entry(frame1)
+placeholder2 = tk.StringVar(root,value="enter longitude here")
+t2 = tk.Entry(frame1,bg="#060B16",highlightbackground="#E0E0E0",highlightcolor="#90B1F1",textvariable=placeholder2)
 t2.grid(row=3,column=4)
 
-l3 = tk.Label(frame1,text="Address")
+l3 = tk.Label(frame1,text="Address:",bg="#060B16")
 l3.grid(row=5,column=3)
-t3 = tk.Text(frame1, width=25,height = 5)
+
+t3 = tk.Text(frame1, width=26,height = 5,bg="#060B16",highlightbackground="#E0E0E0",highlightcolor="#90B1F1")
+t3.insert(0.0,"enter address here")
 t3.grid(row=5,column=4)
+
 searchType = StringVar()
-rb1 = tk.Radiobutton(frame1,text="Lat/Long",variable=searchType, value="LL")
+rb1 = tk.Radiobutton(frame1,text="Lat/Long",variable=searchType, value="LL",bg="#060B16",highlightbackground="#E0E0E0",highlightcolor="#90B1F1")
 rb1.grid(row=7,column=3)
 
-rb2 = tk.Radiobutton(frame1,text="Address",variable=searchType, value="AD")
+rb2 = tk.Radiobutton(frame1,text="Address",variable=searchType, value="AD",bg="#060B16",highlightbackground="#E0E0E0",highlightcolor="#90B1F1")
 rb2.grid(row=7,column=4)
 
 
